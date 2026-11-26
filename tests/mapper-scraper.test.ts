@@ -4,7 +4,7 @@ import {
   mapMalApiMangaToJikan,
   mapMalApiRelationsToJikan,
 } from '../src/mappers/jikan-v4.js';
-import { filterAnimeItems } from '../src/types/search.js';
+import { filterAnimeItems, sortMediaItems } from '../src/types/search.js';
 import {
   parseAnimeHtml,
   parseCharactersHtml,
@@ -276,5 +276,22 @@ describe('MalScraper HTML parsers', () => {
     const sfwOnly = filterAnimeItems(items, { page: 1, limit: 25, sfw: true });
     expect(sfwOnly).toHaveLength(2);
     expect(sfwOnly.some((i) => i.rating === 'rx')).toBe(false);
+
+    const upcoming = filterAnimeItems(
+      [
+        { type: 'TV', status: 'Not yet aired', score: null, rating: 'pg_13', genres: [] },
+        { type: 'TV', status: 'Finished Airing', score: 8.5, rating: 'pg_13', genres: [] },
+      ],
+      { page: 1, limit: 25, status: 'upcoming' },
+    );
+    expect(upcoming).toHaveLength(1);
+    expect(upcoming[0].status).toBe('Not yet aired');
+
+    const sorted = sortMediaItems(
+      [{ score: 7.5 }, { score: null }, { score: 9.2 }],
+      'score',
+      'desc',
+    );
+    expect(sorted.map((s) => s.score)).toEqual([9.2, 7.5, null]);
   });
 });

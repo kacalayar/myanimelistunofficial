@@ -17,6 +17,7 @@ import type {
 import {
   filterAnimeItems,
   filterMangaItems,
+  sortMediaItems,
   type AnimeSearchFilters,
   type MangaSearchFilters,
 } from '../types/search.js';
@@ -114,11 +115,16 @@ export class AnimeService {
       key,
       async () => {
         if (this.malApi) {
+          const fallbackRanking =
+            filters.status === 'upcoming' || filters.status === 'airing'
+              ? filters.status
+              : 'bypopularity';
           const res = filters.q
             ? await this.malApi.searchAnime(filters.q, limit, offset, includeNsfw)
-            : await this.malApi.getTopAnime('bypopularity', limit, offset);
+            : await this.malApi.getTopAnime(fallbackRanking, limit, offset);
           const mapped = res.data.map((entry) => mapMalApiAnimeToJikan(entry.node));
-          const items = filterAnimeItems(mapped, filters);
+          const filtered = filterAnimeItems(mapped, filters);
+          const items = sortMediaItems(filtered as unknown as Record<string, unknown>[], filters.order_by, filters.sort) as unknown as JikanAnime[];
           return {
             pagination: buildPagination(page, limit, items.length, Boolean(res.paging?.next)),
             data: items,
@@ -126,7 +132,8 @@ export class AnimeService {
         }
 
         const scraped = await this.scraper.searchAnime(filters);
-        const items = filterAnimeItems(scraped, filters);
+        const filtered = filterAnimeItems(scraped, filters);
+        const items = sortMediaItems(filtered as unknown as Record<string, unknown>[], filters.order_by, filters.sort) as unknown as JikanAnime[];
         return {
           pagination: buildPagination(page, limit, items.length, scraped.length === limit),
           data: items,
@@ -277,7 +284,8 @@ export class AnimeService {
             ? await this.malApi.searchManga(filters.q, limit, offset, includeNsfw)
             : await this.malApi.getTopManga('bypopularity', limit, offset);
           const mapped = res.data.map((entry) => mapMalApiMangaToJikan(entry.node));
-          const items = filterMangaItems(mapped, filters);
+          const filtered = filterMangaItems(mapped, filters);
+          const items = sortMediaItems(filtered as unknown as Record<string, unknown>[], filters.order_by, filters.sort) as unknown as JikanManga[];
           return {
             pagination: buildPagination(page, limit, items.length, Boolean(res.paging?.next)),
             data: items,
@@ -285,7 +293,8 @@ export class AnimeService {
         }
 
         const scraped = await this.scraper.searchManga(filters);
-        const items = filterMangaItems(scraped, filters);
+        const filtered = filterMangaItems(scraped, filters);
+        const items = sortMediaItems(filtered as unknown as Record<string, unknown>[], filters.order_by, filters.sort) as unknown as JikanManga[];
         return {
           pagination: buildPagination(page, limit, items.length, scraped.length === limit),
           data: items,

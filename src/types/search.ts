@@ -65,8 +65,22 @@ export const JIKAN_TO_MAL_WEB_RATING: Record<AnimeRatingFilter, string> = {
 
 const ADULT_GENRE_NAMES = new Set(['Hentai', 'Erotica']);
 
+const ANIME_STATUS_MATCH: Record<NonNullable<AnimeSearchFilters['status']>, string> = {
+  airing: 'currently airing',
+  complete: 'finished airing',
+  upcoming: 'not yet aired',
+};
+
+const MANGA_STATUS_MATCH: Record<NonNullable<MangaSearchFilters['status']>, string> = {
+  publishing: 'publishing',
+  complete: 'finished',
+  hiatus: 'on hiatus',
+  discontinued: 'discontinued',
+  upcoming: 'not yet published',
+};
+
 /**
- * Applies Jikan v4 client-side filtering (rating, sfw, score bounds, type, status)
+ * Applies Jikan v4 client-side filtering (rating, sfw, status, score bounds, type, genres_exclude, letter)
  * when upstream (such as MAL API v2) does not support all query params natively.
  */
 export function filterAnimeItems<
@@ -98,6 +112,10 @@ export function filterAnimeItems<
     if (letter && !item.title.toLowerCase().startsWith(letter)) {
       return false;
     }
+    if (filters.status && item.status) {
+      const expectedStatus = ANIME_STATUS_MATCH[filters.status];
+      if (item.status.toLowerCase() !== expectedStatus) return false;
+    }
     if (filters.rating) {
       const expected = JIKAN_TO_MAL_API_RATING[filters.rating];
       if (item.rating && item.rating.toLowerCase() !== expected) return false;
@@ -122,6 +140,7 @@ export function filterMangaItems<
   T extends {
     title: string;
     type: string | null;
+    status: string | null;
     score: number | null;
     genres: Array<{ mal_id?: number; name: string }>;
   },
@@ -144,6 +163,10 @@ export function filterMangaItems<
     if (letter && !item.title.toLowerCase().startsWith(letter)) {
       return false;
     }
+    if (filters.status && item.status) {
+      const expectedStatus = MANGA_STATUS_MATCH[filters.status];
+      if (item.status.toLowerCase() !== expectedStatus) return false;
+    }
     if (filters.type && item.type && item.type.toLowerCase() !== filters.type) {
       return false;
     }
@@ -154,5 +177,41 @@ export function filterMangaItems<
       return false;
     }
     return true;
+  });
+}
+
+/**
+ * Sorts Jikan anime/manga items by `order_by` and `sort` (`asc` | `desc`).
+ * Null values are always placed at the end regardless of sort direction.
+ */
+export function sortMediaItems<T extends Record<string, unknown>>(
+  items: T[],
+  orderBy?: string,
+  sort: 'asc' | 'desc' = 'desc',
+): T[] {
+  if (!orderBy) return items;
+  const dir = sort === 'asc' ? 1 : -1;
+
+  const getValue = (item: T): number | string | null => {
+    if (orderBy === 'start_date') {
+      const aired = item.aired as { from?: string | null } | undefined;
+      const published = item.published as { from?: string | null } | undefined;
+      return aired?.from ?? published?.from ?? null;
+    }
+    const raw = item[orderBy];
+    if (typeof raw === 'number' || typeof raw === 'string') return raw;
+    return null;
+  };
+
+  return [...items].sort((a, b) => {
+    const va = getValue(a);
+    const vb = getValue(b);
+    if (va === null && vb === null) return 0;
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    if (typeof va === 'number' && typeof vb === 'number') {
+      return (va - vb) * dir;
+    }
+    return String(va).localeCompare(String(vb)) * dir;
   });
 }

@@ -835,10 +835,16 @@ export class MalScraper {
   }
 
   async searchAnime(filters: AnimeSearchFilters): Promise<JikanAnime[]> {
+    if (!filters.q && (filters.status === 'upcoming' || filters.status === 'airing')) {
+      return this.getTopAnime(filters.status, filters.page, filters.limit);
+    }
+
+    const statusMap: Record<string, string> = { airing: '1', complete: '2', upcoming: '3' };
     const show = (filters.page - 1) * 50;
     const params = new URLSearchParams({ cat: 'anime', show: String(show) });
     if (filters.q) params.set('q', filters.q);
     if (filters.letter) params.set('letter', filters.letter);
+    if (filters.status && statusMap[filters.status]) params.set('status', statusMap[filters.status]);
     if (filters.rating) params.set('r', JIKAN_TO_MAL_WEB_RATING[filters.rating]);
     if (filters.sfw) params.append('genre_ex[]', '12');
     if (filters.genres_exclude) {
@@ -879,10 +885,18 @@ export class MalScraper {
   }
 
   async searchManga(filters: MangaSearchFilters): Promise<JikanManga[]> {
+    const statusMap: Record<string, string> = {
+      publishing: '1',
+      complete: '2',
+      upcoming: '3',
+      hiatus: '4',
+      discontinued: '5',
+    };
     const show = (filters.page - 1) * 50;
     const params = new URLSearchParams({ cat: 'manga', show: String(show) });
     if (filters.q) params.set('q', filters.q);
     if (filters.letter) params.set('letter', filters.letter);
+    if (filters.status && statusMap[filters.status]) params.set('status', statusMap[filters.status]);
     if (filters.sfw) params.append('genre_ex[]', '12');
     if (filters.genres_exclude) {
       for (const g of filters.genres_exclude.split(',')) {

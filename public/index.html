@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAL Unofficial API — Dashboard & Playground</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">
+          <span class="logo">⚡</span>
+          <div>
+            <h1>MAL Unofficial API</h1>
+            <p>Jikan v4 Compatible • SWR SQLite Cache • Zero-Timeout</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="mode-badge" class="badge">Mode: ...</span>
+          <button id="clear-cache-btn" class="btn btn-ghost" title="Clear SQLite cache">Clear Cache</button>
+          <a href="/docs" class="btn btn-secondary" target="_blank">OpenAPI Docs ↗</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Cached Entries</span>
+          <strong class="stat-value" id="stat-entries">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Cache Hit Rate</span>
+          <strong class="stat-value" id="stat-hitrate">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Fresh / Stale Hits</span>
+          <strong class="stat-value" id="stat-hits">-</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Uptime</span>
+          <strong class="stat-value" id="stat-uptime">-</strong>
+        </div>
+      </section>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="browse">Browse & Search</button>
+        <button class="tab" data-tab="playground">API Playground</button>
+      </nav>
+
+      <section id="tab-browse" class="tab-panel active">
+        <div class="toolbar">
+          <form id="search-form" class="search-form">
+            <select id="media-type" class="media-select" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 14px;">
+              <option value="anime">Anime</option>
+              <option value="manga">Manga</option>
+            </select>
+            <select id="rating-filter" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 13px;">
+              <option value="">All Ratings</option>
+              <option value="g">G - All Ages</option>
+              <option value="pg">PG - Children</option>
+              <option value="pg13">PG-13</option>
+              <option value="r17">R - 17+</option>
+              <option value="r">R+ Mild Nudity</option>
+              <option value="rx">Rx - Hentai</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:0 6px;white-space:nowrap;cursor:pointer;">
+              <input id="sfw-filter" type="checkbox" checked />
+              SFW
+            </label>
+            <input
+              id="search-input"
+              type="text"
+              placeholder="Search anime or manga (e.g. Frieren, Berserk)..."
+              autocomplete="off"
+            />
+            <button type="submit" class="btn btn-primary">Search</button>
+          </form>
+          <div class="quick-filters">
+            <button class="btn btn-ghost" data-endpoint="/v4/top/anime?filter=airing&limit=12" data-kind="anime">
+              Top Airing
+            </button>
+            <button class="btn btn-ghost" data-endpoint="/v4/top/manga?filter=manga&limit=12" data-kind="manga">
+              Top Manga
+            </button>
+            <button class="btn btn-ghost" data-endpoint="/v4/seasons/now?limit=12" data-kind="anime">
+              This Season
+            </button>
+          </div>
+        </div>
+
+        <div id="browse-meta" class="meta-bar"></div>
+        <div id="anime-grid" class="anime-grid"></div>
+      </section>
+
+      <section id="tab-playground" class="tab-panel">
+        <div class="playground-bar">
+          <span class="method-tag">GET</span>
+          <input id="playground-url" type="text" value="/v4/anime/1" />
+          <button id="playground-send" class="btn btn-primary">Send Request</button>
+        </div>
+        <div class="preset-row">
+          <button class="preset-btn" data-url="/v4/anime/1">/v4/anime/1</button>
+          <button class="preset-btn" data-url="/v4/manga/2">/v4/manga/2</button>
+          <button class="preset-btn" data-url="/v4/anime?q=frieren&limit=5">/v4/anime?q=frieren&limit=5</button>
+          <button class="preset-btn" data-url="/v4/manga?q=berserk&limit=5">/v4/manga?q=berserk&limit=5</button>
+          <button class="preset-btn" data-url="/v4/top/anime?filter=airing&limit=5">/v4/top/anime?filter=airing&limit=5</button>
+          <button class="preset-btn" data-url="/v4/top/manga?filter=manga&limit=5">/v4/top/manga?filter=manga&limit=5</button>
+          <button class="preset-btn" data-url="/v4/seasons/now?limit=5">/v4/seasons/now?limit=5</button>
+          <button class="preset-btn" data-url="/v4/news?limit=5">/v4/news?limit=5</button>
+          <button class="preset-btn" data-url="/v4/anime/1/news">/v4/anime/1/news</button>
+        </div>
+        <div id="playground-headers" class="meta-bar"></div>
+        <pre id="playground-output" class="json-viewer">Click "Send Request" to inspect the response...</pre>
+      </section>
+    </main>
+
+    <div id="detail-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <button id="modal-close" class="modal-close">✕</button>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

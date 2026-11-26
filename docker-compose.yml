@@ -1,0 +1,22 @@
+services:
+  mal-api:
+    build: .
+    container_name: mal-unofficial-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - MAL_CLIENT_ID=${MAL_CLIENT_ID:-}
+      - CACHE_DB_PATH=/app/data/cache.db
+      - CACHE_FRESH_TTL_MS=${CACHE_FRESH_TTL_MS:-21600000}
+      - CACHE_STALE_TTL_MS=${CACHE_STALE_TTL_MS:-604800000}
+      - UPSTREAM_CONCURRENCY=${UPSTREAM_CONCURRENCY:-2}
+      - UPSTREAM_MIN_INTERVAL_MS=${UPSTREAM_MIN_INTERVAL_MS:-350}
+      - UPSTREAM_TIMEOUT_MS=${UPSTREAM_TIMEOUT_MS:-10000}
+    volumes:
+      - mal_cache_data:/app/data
+
+volumes:
+  mal_cache_data:
